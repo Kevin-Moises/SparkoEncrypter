@@ -13,6 +13,7 @@ Descrição da versão Base do software (ainda em desenvolvimento):
 Nesta seção, se encontra os próximos passos planejados por mim para dar continuidade ao projeto, são eles:
  
   1. Adicionar suporte a criptografia bidirecional.
-  2. Implementar métodos de descriptografia.
+  2. Adicionar pacote instalador (.exe).
   3. Adicionar documentação (JavaDoc).
   4. Adicionar documentação (Manual do usuário).
+  5. Implementar métodos de descriptografia.
