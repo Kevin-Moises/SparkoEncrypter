@@ -14,3 +14,5 @@ Nesta seção, se encontra os próximos passos planejados por mim para dar conti
  
   1. Adicionar suporte a criptografia bidirecional.
   2. Implementar métodos de descriptografia.
+  3. Adicionar documentação (JavaDoc).
+  4. Adicionar documentação (Manual do usuário).
