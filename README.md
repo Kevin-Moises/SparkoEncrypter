@@ -17,3 +17,8 @@ Nesta seção, se encontra os próximos passos planejados por mim para dar conti
   3. Adicionar documentação (JavaDoc).
   4. Adicionar documentação (Manual do usuário).
   5. Implementar métodos de descriptografia.
+
+# Atualização 1.1x
+  1. Adicionado sistema de log de ações.
+  2. Correções minímas na interface.
+ 
