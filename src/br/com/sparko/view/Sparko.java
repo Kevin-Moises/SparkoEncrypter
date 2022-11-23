@@ -22,22 +22,27 @@ import java.awt.Desktop;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.util.Date;
 import javax.swing.JOptionPane;
 
 /**
  * Classe principal do software.
  *
  * @author Kevin Fernando de Moura Moises
- * @version 1.0
+ * @version 1.1x
  */
 public class Sparko extends javax.swing.JFrame {
-
+    private boolean logCriado = false;
+    
     public Sparko() {
         initComponents();
         initUi();
@@ -60,6 +65,8 @@ public class Sparko extends javax.swing.JFrame {
         btnCaixaBaixa.putClientProperty("JButton.buttonType", 
                 "roundRect");
         btnCaixaAlta.putClientProperty("JButton.buttonType", 
+                "roundRect");
+        btnExportarLogAcoes.putClientProperty("JButton.buttonType", 
                 "roundRect");
         btnCopiar.putClientProperty("JButton.buttonType", "roundRect");
         console.setForeground(Color.white);
@@ -123,7 +130,12 @@ public class Sparko extends javax.swing.JFrame {
             }
 
             final String senhaSegura = hexString.toString();
-
+            
+            if(!logCriado)
+                logAcoes();
+            else
+                editLogAcoes();
+            
             console.setText(senhaSegura);
         } 
         catch (NoSuchAlgorithmException | UnsupportedEncodingException  e) {
@@ -132,6 +144,46 @@ public class Sparko extends javax.swing.JFrame {
     
     private void descriptografar(String str) {
         //A ser implementado junto a métodos de criptografia bidirecionais.
+    }
+    
+    private void exportarLogAcoes() {
+        //A ser implementado.
+    }
+    
+    private void logAcoes() {
+        Date data = new Date();
+        DateFormat format = DateFormat.getDateInstance(DateFormat.DEFAULT);
+        
+        try {
+            try (FileWriter fw = new FileWriter(
+                    "C:\\Users\\kevin.moises\\Documents\\NetBeansProjects"
+                            + "\\SparkoCripto\\logs\\logs.txt")) {
+                PrintWriter gravar = new PrintWriter(fw);
+                
+                gravar.printf("Ação de encriptação realizada em " +
+                        format.format(data));
+                logCriado = true;
+            }
+        } 
+        catch (IOException e) {
+            System.out.println("Erro ao criar log de atividade:\n" + e);
+        }
+    }
+    
+    private void editLogAcoes() {
+        Date data = new Date();
+        DateFormat format = DateFormat.getDateInstance(DateFormat.DEFAULT);
+        
+        try {
+            try (FileWriter fw = new FileWriter("C:\\Users\\kevin.moises\\Documents"
+                    + "\\NetBeansProjects\\SparkoCripto\\logs\\logs.txt",
+                    true)) {
+                fw.write("\nAção de encriptação realizada em " +
+                        format.format(data));
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao criar log de atividade:\n" + e);
+        }
     }
     
     private void converterCaixaBaixa(String str) {
@@ -200,6 +252,7 @@ public class Sparko extends javax.swing.JFrame {
         btnCopiar = new javax.swing.JButton();
         btnCaixaAlta = new javax.swing.JButton();
         btnDesencriptar = new javax.swing.JButton();
+        btnExportarLogAcoes = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -285,6 +338,8 @@ public class Sparko extends javax.swing.JFrame {
         btnDesencriptar.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         btnDesencriptar.setText("Desencriptar!");
 
+        btnExportarLogAcoes.setText("Exportar log de ações");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -332,6 +387,8 @@ public class Sparko extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnCaixaAlta)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnExportarLogAcoes)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnCopiar)))
                 .addContainerGap())
         );
@@ -373,15 +430,20 @@ public class Sparko extends javax.swing.JFrame {
                     .addComponent(btnEncriptar)
                     .addComponent(btnLimpar)
                     .addComponent(btnDesencriptar))
-                .addGap(18, 18, 18)
+                .addGap(12, 12, 12)
                 .addComponent(labelInfo14)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(btnCopiar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnCaixaBaixa, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnCaixaAlta, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(btnCopiar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnCaixaAlta, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(btnExportarLogAcoes))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(btnCaixaBaixa)
+                        .addContainerGap())))
         );
 
         pack();
@@ -440,6 +502,7 @@ public class Sparko extends javax.swing.JFrame {
     private javax.swing.JButton btnCopiar;
     private javax.swing.JButton btnDesencriptar;
     private javax.swing.JButton btnEncriptar;
+    private javax.swing.JButton btnExportarLogAcoes;
     private javax.swing.JButton btnLimpar;
     private javax.swing.JTextArea console;
     private javax.swing.JScrollPane jScrollPane1;
