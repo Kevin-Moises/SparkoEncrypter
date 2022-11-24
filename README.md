@@ -2,6 +2,7 @@
 Desenvolvimento de um software para codificar e descodificar senhas escrito em Java, com enfoque em tornar a vida de usuários da Internet mais relevante, proporcionando segurança durante o processo de criação de senhas.
 
   . Versionamento do software:
+  
     1 - #.#x: As versões terminadas em "x" indicam uma versão beta, onde foram implementadas mudanças que ainda vão passar por reviões. Apesar de serem funcionais, podem apresentar bugs.
     2 - #.#f: As versões terminadas em "f" indicam uma versão final, esta versão foi amplamente testada e todos os erros encontrados foram corrigidos, portanto é a mais aconselhada a ser usada.
     
