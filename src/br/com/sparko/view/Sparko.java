@@ -22,6 +22,11 @@ import java.awt.Desktop;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -31,7 +36,10 @@ import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.swing.JOptionPane;
 
 /**
@@ -41,7 +49,12 @@ import javax.swing.JOptionPane;
  * @version 1.1x
  */
 public class Sparko extends javax.swing.JFrame {
+    static final int BUFFER = 4096;
     private boolean logCriado = false;
+    
+    private final Date data = new Date();
+    private final SimpleDateFormat formatador = new SimpleDateFormat(
+            "dd-MM-yyyy");
     
     public Sparko() {
         initComponents();
@@ -146,12 +159,43 @@ public class Sparko extends javax.swing.JFrame {
         //A ser implementado junto a métodos de criptografia bidirecionais.
     }
     
-    private void exportarLogAcoes() {
-        //A ser implementado.
+    private void exportarLogAcoes(String arqSaida, String arqEntrada) {
+        int cont;
+        byte[] dados = new byte[BUFFER];
+        
+        BufferedInputStream origem = null;
+        FileInputStream streamEntrada = null;
+        FileOutputStream destino = null;
+        ZipOutputStream saida = null;
+        ZipEntry entry = null;
+        
+        try {
+            destino = new FileOutputStream(new File(arqSaida));
+            saida = new ZipOutputStream(new BufferedOutputStream(destino));
+            File file = new File(arqEntrada);
+            streamEntrada = new FileInputStream(file);
+            origem = new BufferedInputStream(streamEntrada, BUFFER);
+            entry = new ZipEntry(file.getName());
+            saida.putNextEntry(entry);
+            
+            while((cont = origem.read(dados, 0, BUFFER)) != -1) {
+                saida.write(dados, 0, cont);
+            }
+            
+            origem.close();
+            saida.close();
+            
+            JOptionPane.showMessageDialog(null, 
+                    "Logs exportados para pasta padrão!", 
+                    "Mensagem", JOptionPane.INFORMATION_MESSAGE);
+        } 
+        catch (IOException e) {
+            System.out.println("Erro ao exportar logs:\n" + e);
+        }
     }
     
     private void logAcoes() {
-        Date data = new Date();
+        Date dataLog = new Date();
         DateFormat format = DateFormat.getDateInstance(DateFormat.DEFAULT);
         
         try {
@@ -161,7 +205,7 @@ public class Sparko extends javax.swing.JFrame {
                 PrintWriter gravar = new PrintWriter(fw);
                 
                 gravar.printf("Ação de encriptação realizada em " +
-                        format.format(data));
+                        format.format(dataLog));
                 logCriado = true;
             }
         } 
@@ -171,7 +215,7 @@ public class Sparko extends javax.swing.JFrame {
     }
     
     private void editLogAcoes() {
-        Date data = new Date();
+        Date dataLog = new Date();
         DateFormat format = DateFormat.getDateInstance(DateFormat.DEFAULT);
         
         try {
@@ -179,7 +223,7 @@ public class Sparko extends javax.swing.JFrame {
                     + "\\NetBeansProjects\\SparkoCripto\\logs\\logs.txt",
                     true)) {
                 fw.write("\nAção de encriptação realizada em " +
-                        format.format(data));
+                        format.format(dataLog));
             }
         } catch (IOException e) {
             System.out.println("Erro ao criar log de atividade:\n" + e);
@@ -339,6 +383,11 @@ public class Sparko extends javax.swing.JFrame {
         btnDesencriptar.setText("Desencriptar!");
 
         btnExportarLogAcoes.setText("Exportar log de ações");
+        btnExportarLogAcoes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExportarLogAcoesActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -472,6 +521,14 @@ public class Sparko extends javax.swing.JFrame {
     private void btnCopiarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCopiarActionPerformed
         copiar();
     }//GEN-LAST:event_btnCopiarActionPerformed
+
+    private void btnExportarLogAcoesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportarLogAcoesActionPerformed
+        exportarLogAcoes("C:\\Users\\kevin.moises\\Documents\\NetBeansProjects"
+                            + "\\SparkoCripto\\logs\\logs " + formatador.format(
+                                    data) + ".zip", 
+                        "C:\\Users\\kevin.moises\\Documents\\NetBeansProjects"
+                            + "\\SparkoCripto\\logs\\logs.txt");
+    }//GEN-LAST:event_btnExportarLogAcoesActionPerformed
 
     public static void main(String args[]) {
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
