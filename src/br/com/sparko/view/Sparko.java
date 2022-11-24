@@ -33,13 +33,28 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.swing.JOptionPane;
 
 /**
@@ -49,126 +64,215 @@ import javax.swing.JOptionPane;
  * @version 1.1x
  */
 public class Sparko extends javax.swing.JFrame {
+
     static final int BUFFER = 4096;
     private boolean logCriado = false;
-    
+
     private final Date data = new Date();
     private final SimpleDateFormat formatador = new SimpleDateFormat(
             "dd-MM-yyyy");
-    
+
+    private static final String CHAVE = "sparko";
+    private static final String SALT = "encrypter";
+
     public Sparko() {
         initComponents();
         initUi();
     }
-    
+
     private void initUi() {
         FlatIntelliJLaf.setup();
         FlatIntelliJLaf.updateUI();
         this.setTitle("SparkoEncrypter");
         this.setLocationRelativeTo(null);
         this.setResizable(false);
-        
+
         senha.putClientProperty("JComponent.roundRect", true);
         boxCodificacao.putClientProperty("JComponent.roundRect", true);
-        btnEncriptar.putClientProperty("JButton.buttonType", 
+        btnEncriptar.putClientProperty("JButton.buttonType",
                 "roundRect");
-        btnDesencriptar.putClientProperty("JButton.buttonType", 
+        btnDesencriptar.putClientProperty("JButton.buttonType",
                 "roundRect");
         btnLimpar.putClientProperty("JButton.buttonType", "roundRect");
-        btnCaixaBaixa.putClientProperty("JButton.buttonType", 
+        btnCaixaBaixa.putClientProperty("JButton.buttonType",
                 "roundRect");
-        btnCaixaAlta.putClientProperty("JButton.buttonType", 
+        btnCaixaAlta.putClientProperty("JButton.buttonType",
                 "roundRect");
-        btnExportarLogAcoes.putClientProperty("JButton.buttonType", 
+        btnExportarLogAcoes.putClientProperty("JButton.buttonType",
                 "roundRect");
         btnCopiar.putClientProperty("JButton.buttonType", "roundRect");
         console.setForeground(Color.white);
         console.setBackground(Color.black);
     }
-    
+
     private void abrirGitHub() {
         try {
             URI link = new URI("www.github.com/Kevin-Moises/SparkoEncrypter"
                     + ".git");
             Desktop.getDesktop().browse(link);
-        } 
-        catch (IOException | URISyntaxException e) {
+        } catch (IOException | URISyntaxException e) {
             console.setText("Falha ao lançar navegador web:\n" + e);
         }
     }
-    
+
     private void testeCriptografia() {
         final String str = new String(senha.getPassword());
-        
-        if(str.isEmpty())
-            JOptionPane.showMessageDialog(null, 
-                    "Não é possível converter sem uma senha!", 
+
+        if(str.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    "Não é possível converter sem uma senha!",
                     "Atenção", JOptionPane.WARNING_MESSAGE);
-        else if(boxCodificacao.getSelectedItem().equals(" "))
-            JOptionPane.showMessageDialog(null, 
-                    "Não é possível converter sem um método de conversão!", 
+        } else if(boxCodificacao.getSelectedItem().equals(" ")) {
+            JOptionPane.showMessageDialog(null,
+                    "Não é possível converter sem um método de conversão!",
                     "Atenção", JOptionPane.WARNING_MESSAGE);
-        else {
+        } else {
             if(boxCodificacao.getSelectedItem().toString().equals(
-                "SHA-256")) {
-            Object[] option = {"Sim", "Não"};
-            
-            if(JOptionPane.showOptionDialog(null, 
-                    "O método selecionado foi SHA-256!\nApós criptografar não "
-                            + "será possível reverter o processo!\nDeseja "
-                            + "continuar?", 
-                    "Atenção", JOptionPane.DEFAULT_OPTION, 
-                    JOptionPane.WARNING_MESSAGE, null, 
-                    option, option[0]) == 0) {
+                    "SHA-256")) {
+                Object[] option = {"Sim", "Não"};
+
+                if (JOptionPane.showOptionDialog(null,
+                        "O método selecionado foi SHA-256!\nApós criptografar não "
+                        + "será possível reverter o processo!\nDeseja "
+                        + "continuar?",
+                        "Atenção", JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE, null,
+                        option, option[0]) == 0) {
+                    criptografar(str);
+                } else {
+                    limparCampos();
+                }
+
+            } else if (boxCodificacao.getSelectedItem().toString().equals(
+                    "AES-256")) {
+                console.setText(criptografarAes(str));
+            } else {
                 criptografar(str);
             }
-            else
-                limparCampos();
-        } else 
-            criptografar(str);
         }
     }
-    
+
     private void criptografar(String str) {
         try {
             MessageDigest algorithm = MessageDigest.getInstance(
                     boxCodificacao.getSelectedItem().toString());
             byte messageDigest[] = algorithm.digest(str.getBytes(
-                        "UTF-8"));
+                    "UTF-8"));
 
             StringBuilder hexString = new StringBuilder();
 
-            for(byte b : messageDigest) {
+            for (byte b : messageDigest) {
                 hexString.append(String.format("%02X", 0xFF & b));
             }
 
             final String senhaSegura = hexString.toString();
-            
-            if(!logCriado)
-                logAcoes();
-            else
-                editLogAcoes();
-            
+
             console.setText(senhaSegura);
-        } 
-        catch (NoSuchAlgorithmException | UnsupportedEncodingException  e) {
+            
+            if (!logCriado) {
+                logAcoes();
+            } else {
+                editLogAcoes();
+            }
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
         }
     }
-    
-    private void descriptografar(String str) {
-        //A ser implementado junto a métodos de criptografia bidirecionais.
+
+    private String criptografarAes(String str) {
+        try {
+            byte[] iv = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(
+                    "PBKDF2WithHmacSHA256");
+            KeySpec spec = new PBEKeySpec(CHAVE.toCharArray(),
+                    SALT.getBytes(), 65536, 256);
+            SecretKey tmp = factory.generateSecret(spec);
+            SecretKeySpec secretKey = new SecretKeySpec(tmp.getEncoded(),
+                    "AES");
+
+            Cipher cipher = Cipher.getInstance(
+                    "AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
+            
+            return Base64
+                    .getEncoder().encodeToString(cipher.doFinal(
+                            str.getBytes(StandardCharsets.UTF_8)));
+        } catch (InvalidAlgorithmParameterException | InvalidKeyException
+                | NoSuchAlgorithmException | InvalidKeySpecException
+                | BadPaddingException | IllegalBlockSizeException
+                | NoSuchPaddingException e) {
+            System.out.println("Erro durante o processo de encriptação:\n"
+                    + e);
+        }
+        return null;
     }
     
+    private void testaDescriptografar() {
+        String str = JOptionPane.showInputDialog(
+                "Informe o código criptografado para o processo: ");
+        String metodo = JOptionPane.showInputDialog(
+                "Informe o método de descriptografia para o processo: ");
+        
+        if(str.isEmpty())
+            JOptionPane.showMessageDialog(null,
+                    "Não é possível descriptografar sem um código!",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+        else if(metodo.isEmpty())
+            JOptionPane.showMessageDialog(null,
+                    "Não é possível descriptografar sem um método!",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+        else if(metodo.equalsIgnoreCase("SHA-256") || metodo.
+                equalsIgnoreCase("SHA256"))
+            JOptionPane.showMessageDialog(null,
+                    "Não é possível descriptografar o método SHA-256!",
+                    "Atenção", JOptionPane.WARNING_MESSAGE);
+        else if(metodo.equalsIgnoreCase("AES-256") || metodo.
+                equalsIgnoreCase("AES256"))
+            console.setText(descriptografarAes(str));
+            
+    }
+
+    private String descriptografarAes(String str) {
+        try {
+            byte[] iv = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+            
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(
+                    "PBKDF2WithHmacSHA256");
+            KeySpec spec = new PBEKeySpec(CHAVE.toCharArray(), 
+                    SALT.getBytes(), 65536, 256);
+            SecretKey tmp = factory.generateSecret(spec);
+            SecretKeySpec secretKey = new SecretKeySpec(tmp.getEncoded(), 
+                    "AES");
+            
+            Cipher cipher = Cipher.getInstance(
+                    "AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
+            
+            return new String(cipher.doFinal(Base64.getDecoder().
+                    decode(str)));
+        } 
+        catch (InvalidAlgorithmParameterException | InvalidKeyException | 
+                NoSuchAlgorithmException | InvalidKeySpecException | 
+                BadPaddingException | IllegalBlockSizeException | 
+                NoSuchPaddingException e) {
+            System.out.println("Erro durante o processo de desencriptação:"
+                    + "\n" + e);
+        }
+        return null;
+    }
+
     private void exportarLogAcoes(String arqSaida, String arqEntrada) {
         int cont;
         byte[] dados = new byte[BUFFER];
-        
+
         BufferedInputStream origem = null;
         FileInputStream streamEntrada = null;
         FileOutputStream destino = null;
         ZipOutputStream saida = null;
         ZipEntry entry = null;
-        
+
         try {
             destino = new FileOutputStream(new File(arqSaida));
             saida = new ZipOutputStream(new BufferedOutputStream(destino));
@@ -177,90 +281,90 @@ public class Sparko extends javax.swing.JFrame {
             origem = new BufferedInputStream(streamEntrada, BUFFER);
             entry = new ZipEntry(file.getName());
             saida.putNextEntry(entry);
-            
-            while((cont = origem.read(dados, 0, BUFFER)) != -1) {
+
+            while ((cont = origem.read(dados, 0, BUFFER)) != -1) {
                 saida.write(dados, 0, cont);
             }
-            
+
             origem.close();
             saida.close();
-            
-            JOptionPane.showMessageDialog(null, 
-                    "Logs exportados para pasta padrão!", 
+
+            JOptionPane.showMessageDialog(null,
+                    "Logs exportados para pasta padrão!",
                     "Mensagem", JOptionPane.INFORMATION_MESSAGE);
-        } 
-        catch (IOException e) {
+        } catch (IOException e) {
             System.out.println("Erro ao exportar logs:\n" + e);
         }
     }
-    
+
     private void logAcoes() {
         Date dataLog = new Date();
         DateFormat format = DateFormat.getDateInstance(DateFormat.DEFAULT);
-        
+
         try {
-            try (FileWriter fw = new FileWriter(
+            try ( FileWriter fw = new FileWriter(
                     "C:\\Users\\kevin.moises\\Documents\\NetBeansProjects"
-                            + "\\SparkoCripto\\logs\\logs.txt")) {
+                    + "\\SparkoCripto\\logs\\logs.txt")) {
                 PrintWriter gravar = new PrintWriter(fw);
-                
-                gravar.printf("Ação de encriptação realizada em " +
-                        format.format(dataLog));
+
+                gravar.printf("Ação de encriptação realizada em "
+                        + format.format(dataLog));
                 logCriado = true;
-            }
-        } 
-        catch (IOException e) {
-            System.out.println("Erro ao criar log de atividade:\n" + e);
-        }
-    }
-    
-    private void editLogAcoes() {
-        Date dataLog = new Date();
-        DateFormat format = DateFormat.getDateInstance(DateFormat.DEFAULT);
-        
-        try {
-            try (FileWriter fw = new FileWriter("C:\\Users\\kevin.moises\\Documents"
-                    + "\\NetBeansProjects\\SparkoCripto\\logs\\logs.txt",
-                    true)) {
-                fw.write("\nAção de encriptação realizada em " +
-                        format.format(dataLog));
             }
         } catch (IOException e) {
             System.out.println("Erro ao criar log de atividade:\n" + e);
         }
     }
-    
+
+    private void editLogAcoes() {
+        Date dataLog = new Date();
+        DateFormat format = DateFormat.getDateInstance(DateFormat.DEFAULT);
+
+        try {
+            try ( FileWriter fw = new FileWriter("C:\\Users\\kevin.moises\\Documents"
+                    + "\\NetBeansProjects\\SparkoCripto\\logs\\logs.txt",
+                    true)) {
+                fw.write("\nAção de encriptação realizada em "
+                        + format.format(dataLog));
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao criar log de atividade:\n" + e);
+        }
+    }
+
     private void converterCaixaBaixa(String str) {
-        if(str.isEmpty())
-            JOptionPane.showMessageDialog(null, 
-                    "Primero é necessário converter a sua senha!", 
+        if (str.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    "Primero é necessário converter a sua senha!",
                     "Atenção", JOptionPane.WARNING_MESSAGE);
-        else
+        } else {
             console.setText(str.toLowerCase());
+        }
     }
-    
+
     private void converterCaixaAlta(String str) {
-        if(str.isEmpty())
-            JOptionPane.showMessageDialog(null, 
-                    "Primero é necessário converter a sua senha!", 
+        if (str.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    "Primero é necessário converter a sua senha!",
                     "Atenção", JOptionPane.WARNING_MESSAGE);
-        else
+        } else {
             console.setText(str.toUpperCase());
+        }
     }
-    
+
     private void copiar() {
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        
+
         final String text = console.getText();
-        
+
         StringSelection selection = new StringSelection(text);
         clipboard.setContents(selection, null);
-        
-        JOptionPane.showMessageDialog(null, 
-                "Copiado para a Área de Transferência!", 
+
+        JOptionPane.showMessageDialog(null,
+                "Copiado para a Área de Transferência!",
                 "Informação", JOptionPane.INFORMATION_MESSAGE);
     }
-    
+
     private void limparCampos() {
         senha.setText("");
         boxCodificacao.setSelectedItem(" ");
@@ -332,7 +436,7 @@ public class Sparko extends javax.swing.JFrame {
 
         labelInfo12.setText("Selecione o método de codificação:");
 
-        boxCodificacao.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { " ", "SHA-256" }));
+        boxCodificacao.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { " ", "SHA-256", "AES-256" }));
 
         labelInfo13.setText("2. Selecione o método de codificação.");
 
@@ -381,6 +485,11 @@ public class Sparko extends javax.swing.JFrame {
 
         btnDesencriptar.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         btnDesencriptar.setText("Desencriptar!");
+        btnDesencriptar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDesencriptarActionPerformed(evt);
+            }
+        });
 
         btnExportarLogAcoes.setText("Exportar log de ações");
         btnExportarLogAcoes.addActionListener(new java.awt.event.ActionListener() {
@@ -524,11 +633,15 @@ public class Sparko extends javax.swing.JFrame {
 
     private void btnExportarLogAcoesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportarLogAcoesActionPerformed
         exportarLogAcoes("C:\\Users\\kevin.moises\\Documents\\NetBeansProjects"
-                            + "\\SparkoCripto\\logs\\logs " + formatador.format(
-                                    data) + ".zip", 
-                        "C:\\Users\\kevin.moises\\Documents\\NetBeansProjects"
-                            + "\\SparkoCripto\\logs\\logs.txt");
+                + "\\SparkoCripto\\logs\\logs " + formatador.format(
+                        data) + ".zip",
+                "C:\\Users\\kevin.moises\\Documents\\NetBeansProjects"
+                + "\\SparkoCripto\\logs\\logs.txt");
     }//GEN-LAST:event_btnExportarLogAcoesActionPerformed
+
+    private void btnDesencriptarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDesencriptarActionPerformed
+        testaDescriptografar();
+    }//GEN-LAST:event_btnDesencriptarActionPerformed
 
     public static void main(String args[]) {
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -546,7 +659,7 @@ public class Sparko extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(Sparko.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        
+
         java.awt.EventQueue.invokeLater(() -> {
             new Sparko().setVisible(true);
         });
