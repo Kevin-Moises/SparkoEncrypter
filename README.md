@@ -33,4 +33,7 @@ Nesta seção, se encontra os próximos passos planejados por mim para dar conti
   1. Fixado o sistema de logs.
   2. Adicionado exportação dos logs em .zip com sistema de datas.
   3. Melhorias de desempenho.
- 
+  
+# Atualização 1.2x
+  1. Adicionado suporte a criptografia bidirecional AES-256.
+  2. Melhorias na estrutura de código.
