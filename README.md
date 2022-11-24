@@ -28,4 +28,9 @@ Nesta seção, se encontra os próximos passos planejados por mim para dar conti
 # Atualização 1.1x
   1. Adicionado sistema de log de ações.
   2. Correções minímas na interface.
+  
+# Atualização 1.1f
+  1. Fixado o sistema de logs.
+  2. Adicionado exportação dos logs em .zip com sistema de datas.
+  3. Melhorias de desempenho.
  
