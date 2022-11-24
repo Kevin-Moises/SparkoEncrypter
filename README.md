@@ -1,6 +1,13 @@
 # SparkoEncrypter
 Desenvolvimento de um software para codificar e descodificar senhas escrito em Java, com enfoque em tornar a vida de usuários da Internet mais relevante, proporcionando segurança durante o processo de criação de senhas.
 
+# Versionamento do software
+  
+  1. #.#x: As versões terminadas em "x" indicam uma versão beta, onde foram implementadas mudanças que ainda vão passar por reviões. Apesar de serem funcionais, podem apresentar bugs.
+  2. #.#f: As versões terminadas em "f" indicam uma versão final, esta versão foi amplamente testada e todos os erros encontrados foram corrigidos, portanto é a mais aconselhada a ser usada.
+    
+  Lembrete: O software pode apresentar mal funcionamento, ou bugs, que não foram encontrados pelo desenvolvedor MESMO em uma versão final, para isso, é necessário que o usuário reporte o erro para que possa ser corrigido o mais breve possível.
+
 # Versão Base
 Este projeto tem como objetivo aprimorar minhas habilidades como desenvolvedor e não tem nenhum fim lucrativo. O projeto esta sobre a licença GNU 3.0, tornando-o um Software Livre e de código aberto, podendo ser reaproveitado/modificado por outros da comunidade.
 
